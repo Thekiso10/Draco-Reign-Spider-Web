@@ -1,4 +1,27 @@
 {
     "url_web": "https://www.listadomanga.es/lista.php",
-    "uri_json": "folder/archivo.json"
+    "uri_json": "folder/archivo.json",
+    "name": "scraping-web-mangas",
+    "version": "1.0.0",
+    "description": "Obtención de los datos de los mangas de la pagina: https://www.listadomanga.es",
+    "main": "index.js",
+    "dependencies": {
+      "express": "^4.17.1",
+      "node-cron": "^2.0.3",
+      "puppeteer": "^10.2.0"
+    },
+    "devDependencies": {},
+    "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+      "type": "git",
+      "url": "git+https://github.com/Thekiso10/scraping-web-Listado-Mangas.git"
+    },
+    "author": "Thekiso",
+    "license": "ISC",
+    "bugs": {
+      "url": "https://github.com/Thekiso10/scraping-web-Listado-Mangas/issues"
+    },
+    "homepage": "https://github.com/Thekiso10/scraping-web-Listado-Mangas#readme"
 }
