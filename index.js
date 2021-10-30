@@ -13,7 +13,7 @@ app.listen('3000', function() {
 });
 
 //Creamos el cron web
-cron.schedule('30 * * * * *', function() {
+cron.schedule('0 3 * * *', function() {
     console.time('tiempo ejecución');
 
     (async () => {
