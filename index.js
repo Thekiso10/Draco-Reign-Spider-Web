@@ -30,12 +30,17 @@ cron.schedule('0 3 * * *', function() {
             let elements = document.querySelectorAll("table.ventana_id1 td.izq a");
 
             for(let element of elements) {
-                links.push(element.href);
+                if(links.includes(element.href) == false){
+                    links.push(element.href);
+                }
             }
             
             return links;
         })
 
+        console.log("Numeros de links: " + links.length);
+
+        var index = 1;
         const listFullMangas = []
         for(let link of links){
             await page.goto(link);
@@ -109,7 +114,8 @@ cron.schedule('0 3 * * *', function() {
             element.id = link.split('=')[1];
 
             listFullMangas.push(element);
-            console.log("Se ha guardado el manga " + element.id);
+            console.log("Se ha guardado el manga " + element.id + " | NUM: " + index + "/" + links.length);
+            index++;
         }
 
         //IMPORTANTE cerrar el navegador
