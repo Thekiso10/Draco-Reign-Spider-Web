@@ -26,4 +26,4 @@ El proyecto obtiende los datos de los mangas a partir de la pagina https://www.l
 8. Fecha de estreno de los tomos publicados en España  
 
 ## Versión
-Versión Actual: **1.0**
+Versión Actual: **1.1**

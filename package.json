@@ -2,7 +2,7 @@
     "url_web": "https://www.listadomanga.es/lista.php",
     "uri_json": "folder/archivo.json",
     "name": "scraping-web-mangas",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "Obtención de los datos de los mangas de la pagina: https://www.listadomanga.es",
     "main": "index.js",
     "dependencies": {
