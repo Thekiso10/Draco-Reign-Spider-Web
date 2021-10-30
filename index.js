@@ -18,7 +18,7 @@ cron.schedule('30 * * * * *', function() {
 
     (async () => {
         //Cargamos el navegador
-        const browser = await puppeteer.launch();
+        const browser = await puppeteer.launch({headless: true, args:['--no-sandbox']});
         //Llamamos al navegador para que abra una pagina en blanco
         const page = await browser.newPage();
         //Nos dirimos a la web que nos interesa
@@ -39,7 +39,6 @@ cron.schedule('30 * * * * *', function() {
         const listFullMangas = []
         for(let link of links){
             await page.goto(link);
-            //await page.waitForTimeout(1000);
 
             let element = await page.evaluate(() => {
                 //Definir el bloque de los datos generales    
