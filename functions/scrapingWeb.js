@@ -72,7 +72,7 @@ function ExecuteScraping(puppeteer, config, fs) {
                 if(indexAutor != -1){
                     objJSON.nombreAutor = element[indexAutor].textContent;
                     if(element[indexAutor].href != null){
-                        objJSON.idAutor = element[indexAutor].href;
+                        objJSON.idAutor = element[indexAutor].href.split('id=')[1];
                     }
                 }
 
@@ -85,14 +85,17 @@ function ExecuteScraping(puppeteer, config, fs) {
                 for(let [index, manga] of mangas.entries()){
                     if((index + 1) <= Number(objJSON.numEspanol)){
                         if(!isNaN(Date.parse(manga.innerText))){
-                            let date = manga.innerText
-
                             let padreTabla = manga.parentElement.childNodes
+
+                            let date = manga.innerText
+                            let precio = padreTabla[padreTabla.length - 3].textContent;
+
                             if(Number.isInteger(parseInt(padreTabla[padreTabla.length - 2].textContent.trim()))){
-                                date = padreTabla[padreTabla.length - 2].textContent.concat(date);       
+                                date = padreTabla[padreTabla.length - 2].textContent.concat(date); 
+                                precio = padreTabla[padreTabla.length - 4].textContent;
                             }
 
-                            listMangas.push({"numTomo": (index + 1), "fecha": date})
+                            listMangas.push({"numTomo": (index + 1), "fecha": date, "precio": precio})
                         }
                     }
                 }
@@ -109,8 +112,6 @@ function ExecuteScraping(puppeteer, config, fs) {
             listFullMangas.push(element);
             console.log("Se ha guardado el manga " + element.id + " | NUM: " + index + "/" + links.length);
             index++;
-
-            break;
         }
 
         //IMPORTANTE cerrar el navegador
