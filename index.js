@@ -3,131 +3,41 @@ const config = require('./package.json');
 const cron = require('node-cron');
 const express = require('express');
 const puppeteer = require('puppeteer');
+const http = require("http");
 const fs = require('fs');
+
+//Funciones propias
+const scraping = require('./functions/scrapingWeb');
 
 //Creamos el servidor express
 const app = express();
+const host = 'localhost';
+const port = 3000;
+
 //Hacemos que el servidor escuche el puerto 3000
-app.listen('3000', function() {
-  console.log('Servidor web escuchando en el puerto 3000');
+app.listen(port, function() {
+  console.log(`Servidor web escuchando en el puerto ${port}`);
+});
+
+const requestListener = function (req, res) {
+    res.setHeader("Content-Type", "application/json");
+    res.writeHead(200);
+
+    scraping.ExecuteScraping(puppeteer, config, fs);
+
+    res.end(`{"message": "Test de la función ejecutado. Revisa los logs"}`);
+};
+
+const server = http.createServer(requestListener);
+server.listen(port, host, () => {
+    console.log(`Server is running on http://${host}:${port}`);
 });
 
 //Creamos el cron web
 cron.schedule('0 3 * * *', function() {
     console.time('tiempo ejecución');
 
-    (async () => {
-        //Cargamos el navegador
-        const browser = await puppeteer.launch({headless: true, args:['--no-sandbox']});
-        //Llamamos al navegador para que abra una pagina en blanco
-        const page = await browser.newPage();
-        //Nos dirimos a la web que nos interesa
-        await page.goto(config.url_web);
+    scraping.ExecuteScraping(puppeteer, config, fs);
 
-        //Obtenemos los links de los diferentes Mangas
-        const links = await page.evaluate(() => {
-            let links = [];
-            let elements = document.querySelectorAll("table.ventana_id1 td.izq a");
-
-            for(let element of elements) {
-                if(links.includes(element.href) == false){
-                    links.push(element.href);
-                }
-            }
-            
-            return links;
-        })
-
-        console.log("Numeros de links: " + links.length);
-
-        var index = 1;
-        const listFullMangas = []
-        for(let link of links){
-            await page.goto(link);
-
-            let element = await page.evaluate(() => {
-                //Definir el bloque de los datos generales    
-                let element = document.querySelector("table.ventana_id1 td.izq").childNodes;
-
-                let indexJapon = -1;
-                let indexEspanol = -1;
-                for(let [index, tags] of element.entries()){
-                    if(tags.innerText == "Números en japonés:"){
-                        indexJapon = index + 1;
-                    }
-
-                    if(tags.innerText == "Números en español:"){
-                        indexEspanol = index + 1;
-                    }
-                }
-
-                //Crear objecto JSON con los dato basicos
-                let estadoJapon = null;
-                if(indexJapon != -1){
-                    estadoJapon = element[indexJapon].textContent.split('(')[1].slice(0, -1);
-                }
-                
-                let estadoEspanol = null;
-                if(indexEspanol != -1){
-                    estadoEspanol = element[indexEspanol].textContent.split('(')[1].slice(0, -1);
-                }    
-                    
-
-                let objJSON = {};
-                objJSON.title = element[1].innerText;
-
-                if(indexJapon != -1){
-                    objJSON.numJapon = element[indexJapon].textContent.split('(')[0].trim();
-                    objJSON.estadoJapon = estadoJapon;
-                }
-                
-                if(indexEspanol != -1){
-                    objJSON.numEspanol = element[indexEspanol].textContent.split('(')[0].trim();
-                    objJSON.estadoEspanol = estadoEspanol;
-                }
-                
-                
-                let listMangas = []
-                let mangas = document.querySelectorAll("table.ventana_id1 td.cen a");
-                for(let [index, manga] of mangas.entries()){
-                    if((index + 1) <= Number(objJSON.numEspanol)){
-                        if(!isNaN(Date.parse(manga.innerText))){
-                            let date = manga.innerText
-
-                            let padreTabla = manga.parentElement.childNodes
-                            if(Number.isInteger(parseInt(padreTabla[padreTabla.length - 2].textContent.trim()))){
-                                date = padreTabla[padreTabla.length - 2].textContent.concat(date);       
-                            }
-
-                            listMangas.push({"numTomo": (index + 1), "fecha": date})
-                        }
-                    }
-                }
-
-                //
-                objJSON.listMangas = listMangas;
-
-                //return objJSON;
-                return objJSON;
-            })
-
-            element.id = link.split('=')[1];
-
-            listFullMangas.push(element);
-            console.log("Se ha guardado el manga " + element.id + " | NUM: " + index + "/" + links.length);
-            index++;
-        }
-
-        //IMPORTANTE cerrar el navegador
-        await browser.close();
-
-        let jsonFile = {"listMangas": listFullMangas}
-        fs.writeFile(config.uri_json, JSON.stringify(jsonFile),'utf8', (err) => { 
-            if (err) throw err; 
-                console.log('The file has been saved!'); 
-        }); 
-
-        console.timeEnd('tiempo ejecución');
-
-    })();
+    console.timeEnd('tiempo ejecución');
 });
