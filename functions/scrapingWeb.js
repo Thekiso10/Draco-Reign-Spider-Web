@@ -1,4 +1,4 @@
-function ExecuteScraping(puppeteer, config, fs) {
+function executeScraping(puppeteer, config, fs) {
     
     (async () => {
         //Cargamos el navegador
@@ -117,15 +117,23 @@ function ExecuteScraping(puppeteer, config, fs) {
         //IMPORTANTE cerrar el navegador
         await browser.close();
 
-        let jsonFile = {"listMangas": listFullMangas}
-        fs.writeFile(config.uri_json, JSON.stringify(jsonFile),'utf8', (err) => { 
+        fs.writeFile(config.uri_json, JSON.stringify(listFullMangas),'utf8', (err) => { 
             if (err) throw err; 
                 console.log('The file has been saved!'); 
-        });       
+        });
 
     })();
 }
 
+function getScraping(config, fs) {
+    return fs.readFileSync(config.uri_json, {encoding:'utf8'});
+}
+
+function saveScraping(puppeteer, config, fs) {
+    executeScraping(puppeteer, config, fs);
+}
+
 module.exports = {
-    "ExecuteScraping": ExecuteScraping
+    "getScraping": getScraping,
+    "saveScraping": saveScraping
 }
