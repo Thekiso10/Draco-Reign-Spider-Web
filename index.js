@@ -12,7 +12,7 @@ const scraping = require('./functions/scrapingWeb');
 //Creamos el servidor express
 const app = express();
 const host = 'localhost';
-const port = 8000;
+const port = config.port;
 
 //Hacemos que el servidor escuche el puerto 3000
 app.listen(port, function() {
@@ -23,10 +23,10 @@ app.get("/api/getJsonScraping", (req, res) => {
     console.time('tiempo ejecución');
     res.header("Access-Control-Allow-Origin"); //Evitar problemas con los CORPS
 
+    let jsonScraping = scraping.getScraping(config, fs);
 
-
-    res.json({status: 200, message: "Ok"});
-    console.timeEnd('tiempo ejecución');
+    res.json({status: 200, message: "Ok", json: jsonScraping});
+    console.timeEnd('tiempo ejecución'); 
 })
 
 app.get('/', (req, res) => {
@@ -39,7 +39,7 @@ app.get('/', (req, res) => {
 cron.schedule('0 3 * * *', function() {
     console.time('tiempo ejecución');
 
-    scraping.ExecuteScraping(puppeteer, config, fs);
+    scraping.saveScraping(puppeteer, config, fs);
 
     console.timeEnd('tiempo ejecución');
 });
