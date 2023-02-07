@@ -12,32 +12,34 @@ const scraping = require('./functions/scrapingWeb');
 //Creamos el servidor express
 const app = express();
 const host = 'localhost';
-const port = 3000;
+const port = config.port;
 
 //Hacemos que el servidor escuche el puerto 3000
 app.listen(port, function() {
-  console.log(`Servidor web escuchando en el puerto ${port}`);
+  console.log(`Servidor web escuchando en el puerto http://${host}:${port}`);
 });
 
-const requestListener = function (req, res) {
-    res.setHeader("Content-Type", "application/json");
-    res.writeHead(200);
+app.get("/api/getJsonScraping", (req, res) => {
+    console.time('tiempo ejecución');
+    res.header("Access-Control-Allow-Origin"); //Evitar problemas con los CORPS
 
-    scraping.ExecuteScraping(puppeteer, config, fs);
+    let jsonScraping = scraping.getScraping(config, fs);
 
-    res.end(`{"message": "Test de la función ejecutado. Revisa los logs"}`);
-};
+    res.json({status: 200, message: "Ok", json: jsonScraping});
+    console.timeEnd('tiempo ejecución'); 
+})
 
-const server = http.createServer(requestListener);
-server.listen(port, host, () => {
-    console.log(`Server is running on http://${host}:${port}`);
-});
+app.get('/', (req, res) => {
+    console.log("Forwarded header =>", req.headers['X-Forwarded-For']);
+    res.header("Access-Control-Allow-Origin"); //Evitar problemas con los CORPS
+    res.json({status: 200, message: `Server is running on http://${host}:${port}`});
+})
 
 //Creamos el cron web
 cron.schedule('0 3 * * *', function() {
     console.time('tiempo ejecución');
 
-    scraping.ExecuteScraping(puppeteer, config, fs);
+    scraping.saveScraping(puppeteer, config, fs);
 
     console.timeEnd('tiempo ejecución');
 });
