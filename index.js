@@ -24,8 +24,9 @@ app.get("/api/getJsonScraping", (req, res) => {
     res.header("Access-Control-Allow-Origin"); //Evitar problemas con los CORPS
 
     let jsonScraping = scraping.getScraping(config, fs);
+    let status = (jsonScraping.length > 0) ? 200 : 500;
 
-    res.json({status: 200, message: "Ok", json: jsonScraping});
+    res.json({status: status, json: jsonScraping});
     console.timeEnd('tiempo ejecución'); 
 })
 

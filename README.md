@@ -30,4 +30,4 @@ El proyecto obtiende los datos de los mangas a partir de la pagina https://www.l
 10. Precio del tomo
 
 ## Versión
-Versión Actual: **1.3**
+Versión Actual: **1.3.1**
