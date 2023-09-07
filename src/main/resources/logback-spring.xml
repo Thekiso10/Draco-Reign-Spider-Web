@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml" />
+
+    <springProfile name="default">
+        <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="dev">
+
+        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <pattern>%clr(%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36}) - %msg%n</pattern>
+                <charset>utf8</charset>
+            </encoder>
+        </appender>
+
+        <logger name="org.springframework" level="ERROR"/>
+        <logger name="org.hibernate" level="WARN"/>
+        <logger name="org.flywaydb" level="WARN"/>
+
+        <logger name="com.thekiso.dragoreign.projectblue" level="DEBUG"/>
+
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+
+    </springProfile>
+
+    <springProfile name="prod">
+
+        <appender name="FILE-ROLLING" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <file>dynakku2.log</file>
+
+            <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+                <fileNamePattern>logs/archived/dynakku2.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+                <!-- each archived file, size max 10MB -->
+                <maxFileSize>10MB</maxFileSize>
+                <!-- total size of all archive files, if total size > 20GB, it will delete old archived file -->
+                <totalSizeCap>20GB</totalSizeCap>
+                <!-- 60 days to keep -->
+                <maxHistory>60</maxHistory>
+            </rollingPolicy>
+
+            <encoder>
+                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n</pattern>
+            </encoder>
+        </appender>
+
+        <logger name="org.springframework" level="ERROR"/>
+        <logger name="org.hibernate" level="WARN"/>
+        <logger name="com.thekiso.dragoreign.projectblue" level="INFO"/>
+
+        <root level="ERROR">
+            <appender-ref ref="FILE-ROLLING"/>
+        </root>
+
+    </springProfile>
+
+</configuration>
