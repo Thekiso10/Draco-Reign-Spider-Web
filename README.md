@@ -1,6 +1,12 @@
 # scraping-web-Listado-Mangas
 Obtención de los datos de los mangas de la pagina: https://www.listadomanga.es
 
+## Dependencias
+* Node.js >= v18.18.0
+* express v4.17.1
+* node-cron v2.0.3
+* puppeteer v10.2.0
+
 ## Ejecutar el proyecto
 1. Lo primero es descargar las dependencias necesarias:
 ```Node
@@ -8,8 +14,8 @@ npm install
 ```
 
 2. Despues de tener todas la dependencias, se puede ejecutar:
-```
-node index.js 
+```Node
+npm run serve
 ```
 
 ## Scraping Web
