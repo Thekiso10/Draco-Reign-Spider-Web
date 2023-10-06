@@ -5,5 +5,5 @@ module.exports = {
     jsonFolder: "./folder/",
     listadoMangaCron: '0 1 * * *',
     listadoMangaUrl: "https://www.listadomanga.es/lista.php",
-    listadoMangaNameFile: "manga.json"
+    listadoMangaNameFile: "listado-mangas.json"
 };
