@@ -1,11 +1,22 @@
 const puppeteer = require('puppeteer');
+const { Cluster } = require('puppeteer-cluster');
 const jsonService = require('./jsonService');
+
+const tagMappings = {
+    "Números en japonés:": "indexJapon",
+    "Números en español:": "indexEspanol",
+    "Números en castellano:": "indexEspanol",
+    "Guion:": "indexAutor",
+    "Colección:": "indexColeccion",
+};
 
 async function getLinks(page, config) {
   await page.goto(config.listadoMangaUrl);
   const links = await page.evaluate(() => {
     let links = [];
     let elements = document.querySelectorAll("table.ventana_id1 td.izq a");
+
+    let index = 1;
 
     for (let element of elements) {
       if (!links.includes(element.href)) {
@@ -18,114 +29,124 @@ async function getLinks(page, config) {
 }
 
 async function scrapeMangaData(page, link) {
-  await page.goto(link);
+    await page.goto(link, { waitUntil: "domcontentloaded" });
 
-  const mangaData = await page.evaluate(() => {
-      //Definir el bloque de los datos generales    
-      let element = document.querySelector("table.ventana_id1 td.izq").childNodes;
+    const mangaData = await page.evaluate(() => {
+        const objJSON = {};
+        let index = {indexJapon: -1, indexEspanol: -1, indexAutor: -1, indexColeccion: -1};
+        
+        //Definir el bloque de los datos generales    
+        let element = document.querySelector("table.ventana_id1 td.izq").childNodes;
+        
 
-      let indexJapon = -1;
-      let indexEspanol = -1;
-      let indexAutor = -1;
-      let indexColeccion = -1;
-      for(let [index, tags] of element.entries()){
-          if(tags.innerText == "Números en japonés:"){
-              indexJapon = index + 1;
-          }
+        for(let [i, tags] of element.entries()){
+            if(tags.innerText == "Números en japonés:"){
+                index.indexJapon = i + 1;
+            }
 
-          if(tags.innerText == "Números en español:" || tags.innerText == "Números en castellano:"){
-              indexEspanol = index + 1;
-          }
+            if(tags.innerText == "Números en español:" || tags.innerText == "Números en castellano:"){
+                index.indexEspanol = i + 1;
+            }
 
-          if(tags.innerText == "Guion:"){
-              indexAutor = index + 2;
-          }
+            if(tags.innerText == "Guion:"){
+                index.indexAutor = i + 2;
+            }
 
-          if(tags.innerText == "Colección:"){
-              indexColeccion = index + 2;
-          }
-      }
+            if(tags.innerText == "Colección:"){
+                index.indexColeccion = i + 2;
+            }
+        }
+        
+        objJSON.title = element[1].innerText;
 
-      let objJSON = {};
-      objJSON.title = element[1].innerText;
+        //Crear objecto JSON con los dato basico
+        if(index.indexJapon != -1){
+            objJSON.estadoJapon = element[index.indexJapon].textContent.split('(')[1].slice(0, -1);
+            objJSON.numJapon = element[index.indexJapon].textContent.split('(')[0].trim();
+        }
+        
+        if(index.indexEspanol != -1){
+            objJSON.estadoEspanol = element[index.indexEspanol].textContent.split('(')[1].slice(0, -1);
+            objJSON.numEspanol = element[index.indexEspanol].textContent.split('(')[0].trim();
+        }    
+        
+        if(index.indexAutor != -1){
+            objJSON.nombreAutor = element[index.indexAutor].textContent;
+            if(element[index.indexAutor].href != null){
+                objJSON.idAutor = element[index.indexAutor].href.split('id=')[1];
+            }
+        }
 
-      //Crear objecto JSON con los dato basico
-      if(indexJapon != -1){
-          objJSON.estadoJapon = element[indexJapon].textContent.split('(')[1].slice(0, -1);
-          objJSON.numJapon = element[indexJapon].textContent.split('(')[0].trim();
-      }
+        if(index.indexColeccion != -1){
+            objJSON.coleccion = element[index.indexColeccion].textContent;
+        }
 
-      if(indexEspanol != -1){
-          objJSON.estadoEspanol = element[indexEspanol].textContent.split('(')[1].slice(0, -1);
-          objJSON.numEspanol = element[indexEspanol].textContent.split('(')[0].trim();
-      }    
+        let listMangas = []
+        let mangas = document.querySelectorAll("table.ventana_id1 td.cen a");
+        for(let [index, manga] of mangas.entries()){
+            if((index + 1) <= Number(objJSON.numEspanol)){
+                if(!isNaN(Date.parse(manga.innerText))){
+                    let padreTabla = manga.parentElement.childNodes
 
-      if(indexAutor != -1){
-          objJSON.nombreAutor = element[indexAutor].textContent;
-          if(element[indexAutor].href != null){
-              objJSON.idAutor = element[indexAutor].href.split('id=')[1];
-          }
-      }
+                    let date = manga.innerText
+                    let precio = padreTabla[padreTabla.length - 3].textContent;
 
-      if(indexColeccion != -1){
-          objJSON.coleccion = element[indexColeccion].textContent;
-      }
+                    if(Number.isInteger(parseInt(padreTabla[padreTabla.length - 2].textContent.trim()))){
+                        date = padreTabla[padreTabla.length - 2].textContent.concat(date); 
+                        precio = padreTabla[padreTabla.length - 4].textContent;
+                    }
 
-      let listMangas = []
-      let mangas = document.querySelectorAll("table.ventana_id1 td.cen a");
-      for(let [index, manga] of mangas.entries()){
-          if((index + 1) <= Number(objJSON.numEspanol)){
-              if(!isNaN(Date.parse(manga.innerText))){
-                  let padreTabla = manga.parentElement.childNodes
+                    listMangas.push({"numTomo": (index + 1), "fecha": date, "precio": precio})
+                }
+            }
+        }
 
-                  let date = manga.innerText
-                  let precio = padreTabla[padreTabla.length - 3].textContent;
+        objJSON.listMangas = listMangas;
+        return objJSON;
+    });
 
-                  if(Number.isInteger(parseInt(padreTabla[padreTabla.length - 2].textContent.trim()))){
-                      date = padreTabla[padreTabla.length - 2].textContent.concat(date); 
-                      precio = padreTabla[padreTabla.length - 4].textContent;
-                  }
-
-                  listMangas.push({"numTomo": (index + 1), "fecha": date, "precio": precio})
-              }
-          }
-      }
-
-      objJSON.listMangas = listMangas;
-
-    return objJSON;
-  });
-
-  mangaData.id = link.split('=')[1];
-  return mangaData;
+    mangaData.id = link.split('=')[1];
+    return mangaData;
 }
 
-async function executeScraping(config, jsonService) {
-  const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
-  const page = await browser.newPage();
-  const links = await getLinks(page, config);
+async function executeScraping(config) {
+    let index = 1;
+    let linksSize = 0;
 
-  const listFullMangas = [];
-  const linksSize = links.length;
-  let index = 1;
+    const listFullMangas = [];
+    const cluster = await Cluster.launch({
+      concurrency: Cluster.CONCURRENCY_CONTEXT,
+      maxConcurrency: config.clusterConcurrency,
+    });
   
-  for (const link of links) {
-      const mangaData = await scrapeMangaData(page, link);
-      listFullMangas.push(mangaData);
-      console.log("Se ha guardado el manga " + mangaData.id + " | NUM: " + index + "/" + linksSize);
-      index += 1;
-  }
+    await cluster.task(async ({ page, data: link }) => {
+        const mangaData = await scrapeMangaData(page, link);
+        listFullMangas.push(mangaData);
+        console.log("Se ha guardado el manga " + mangaData.id + " | NUM: " + index + "/" + linksSize);
+        index += 1;
+    });
 
-  await jsonService.saveToJson(config.folderJson + 'manga.json', listFullMangas);
-  await browser.close();
+    // Crear una nueva página dentro del clúster
+    await cluster.queue(async ({ page }) => {
+      const links = await getLinks(page, config);
+      linksSize = links.length;
+      links.forEach((link) => {
+        cluster.queue(link);
+      });
+    });
+  
+    await cluster.idle();
+    await cluster.close();
+    
+    await jsonService.saveToJson(config.folderJson + 'manga.json', listFullMangas);
 }
 
-async function getScraping(config, jsonService) {
-    await executeScraping(config, jsonService);
+async function getScraping(config) {
+    await executeScraping(config);
     return jsonService.readFromJson(config.folderJson + 'manga.json');
 }
 
 module.exports = {
-  executeScraping,
-  getScraping,
+    executeScraping,
+    getScraping,
 };

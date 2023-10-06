@@ -1,5 +1,4 @@
 const express = require('express');
-const fs = require('fs');
 const scraping = require('../service/listadoMangaScraping');
 const config = require('../config/config');
 
@@ -9,7 +8,7 @@ router.get('/listado-manga/json', (req, res) => {
     console.time('tiempo ejecución');
     res.header("Access-Control-Allow-Origin"); // Evitar problemas con los CORPS
 
-    let jsonScraping = scraping.getScraping(config, fs);
+    let jsonScraping = scraping.getScraping(config);
     let status = (jsonScraping.length > 0) ? 200 : 500;
 
     res.json({ status: status, json: jsonScraping });
