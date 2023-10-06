@@ -14,11 +14,25 @@ function saveToJson(filePath, data) {
 
 function readFromJson(filePath) {
     return new Promise((resolve, reject) => {
-        fs.readFile(filePath, 'utf8', (err, data) => {
+        // Verificar si el archivo existe antes de intentar leerlo
+        fs.stat(filePath, (err, stats) => {
             if (err) {
-                reject(err);
+                if (err.code === 'ENOENT') {
+                    // El archivo no existe
+                    reject(new Error('El archivo no existe'));
+                } else {
+                    // Ocurrió un error diferente al verificar la existencia del archivo
+                    reject(err);
+                }
             } else {
-                resolve(JSON.parse(data));
+                // El archivo existe, proceder a la lectura
+                fs.readFile(filePath, 'utf8', (readErr, data) => {
+                    if (readErr) {
+                        reject(readErr);
+                    } else {
+                        resolve(JSON.parse(data));
+                    }
+                });
             }
         });
     });

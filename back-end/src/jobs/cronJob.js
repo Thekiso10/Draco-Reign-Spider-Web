@@ -1,7 +1,7 @@
-const cron = require('node-cron');
-const jsonService = require('./../service/jsonService');
-const listadoMangaScraping = require('./../service/listadoMangaScraping');
 const config = require('../config/config');
+const cron = require('node-cron');
+
+const listadoMangaScraping = require('./../service/listadoMangaScraping');
 
 cron.schedule(config.listadoMangaCron, async function() {
   console.time('tiempo ejecución');

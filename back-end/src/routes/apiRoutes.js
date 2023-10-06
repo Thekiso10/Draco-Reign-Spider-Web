@@ -1,24 +1,38 @@
 const express = require('express');
-const scraping = require('../service/listadoMangaScraping');
+const listadoMangaScraping = require('../service/listadoMangaScraping');
 const config = require('../config/config');
 
 const router = express.Router();
 
-router.get('/listado-manga/json', (req, res) => {
-    console.time('tiempo ejecución');
-    res.header("Access-Control-Allow-Origin"); // Evitar problemas con los CORPS
+// Función auxiliar para manejar errores y enviar respuestas
+async function handleResponse(req, res, action) {
+    res.header('Access-Control-Allow-Origin', '*');
+    try {
+        const jsonScraping = await action();
+        if (jsonScraping.length > 0) {
+            res.status(200).send(jsonScraping);
+        } else {
+            res.status(404).send({ error: 'No se encontraron datos.' });
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).send({ error: 'Error interno del servidor.' });
+    }
+}
 
-    let jsonScraping = scraping.getScraping(config);
-    let status = (jsonScraping.length > 0) ? 200 : 500;
-
-    res.json({ status: status, json: jsonScraping });
-    console.timeEnd('tiempo ejecución');
+router.get('/health', (req, res) => {
+    res.status(200).json({ message: 'Server is running' });
 });
 
-router.get('/status', (req, res) => {
-    console.log("Forwarded header =>", req.headers['X-Forwarded-For']);
-    res.header("Access-Control-Allow-Origin", "*"); // Evitar problemas con los CORPS
-    res.json({ status: 200, message: `Server is running on http://localhost:${config.port}/api` });
+router.get('/listado-manga/json', async (req, res) => {
+    await handleResponse(req, res, () => listadoMangaScraping.getScraping(config));
+});
+
+router.get('/listado-manga/scraping', async (req, res) => {
+    await handleResponse(req, res, async () => {
+        await listadoMangaScraping.executeScraping(config);
+        return listadoMangaScraping.getScraping(config);
+    });
 });
 
 module.exports = router;

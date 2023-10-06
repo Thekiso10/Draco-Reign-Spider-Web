@@ -1,30 +1,22 @@
-const puppeteer = require('puppeteer');
 const { Cluster } = require('puppeteer-cluster');
 const jsonService = require('./jsonService');
 
-const tagMappings = {
-    "Números en japonés:": "indexJapon",
-    "Números en español:": "indexEspanol",
-    "Números en castellano:": "indexEspanol",
-    "Guion:": "indexAutor",
-    "Colección:": "indexColeccion",
-};
-
 async function getLinks(page, config) {
   await page.goto(config.listadoMangaUrl);
+  
   const links = await page.evaluate(() => {
     let links = [];
     let elements = document.querySelectorAll("table.ventana_id1 td.izq a");
-
-    let index = 1;
 
     for (let element of elements) {
       if (!links.includes(element.href)) {
         links.push(element.href);
       }
     }
+
     return links;
   });
+
   return links;
 }
 
@@ -32,33 +24,20 @@ async function scrapeMangaData(page, link) {
     await page.goto(link, { waitUntil: "domcontentloaded" });
 
     const mangaData = await page.evaluate(() => {
-        const objJSON = {};
         let index = {indexJapon: -1, indexEspanol: -1, indexAutor: -1, indexColeccion: -1};
-        
+        const tagMappings = {"Números en japonés:": "indexJapon", "Números en español:": "indexEspanol", "Números en castellano:": "indexEspanol", "Guion:": "indexAutor", "Colección:": "indexColeccion"};
+
         //Definir el bloque de los datos generales    
         let element = document.querySelector("table.ventana_id1 td.izq").childNodes;
+        const objJSON = {"title": element[1].innerText, "listMangas": []};
         
-
-        for(let [i, tags] of element.entries()){
-            if(tags.innerText == "Números en japonés:"){
-                index.indexJapon = i + 1;
-            }
-
-            if(tags.innerText == "Números en español:" || tags.innerText == "Números en castellano:"){
-                index.indexEspanol = i + 1;
-            }
-
-            if(tags.innerText == "Guion:"){
-                index.indexAutor = i + 2;
-            }
-
-            if(tags.innerText == "Colección:"){
-                index.indexColeccion = i + 2;
+        for (const [i, tags] of element.entries()) {
+            const tagText = tags.innerText;
+            if (tagMappings.hasOwnProperty(tagText)) {
+                index[tagMappings[tagText]] = i + ((tagText === "Guion:" || tagText === "Colección:") ? 2 : 1);
             }
         }
         
-        objJSON.title = element[1].innerText;
-
         //Crear objecto JSON con los dato basico
         if(index.indexJapon != -1){
             objJSON.estadoJapon = element[index.indexJapon].textContent.split('(')[1].slice(0, -1);
@@ -81,27 +60,22 @@ async function scrapeMangaData(page, link) {
             objJSON.coleccion = element[index.indexColeccion].textContent;
         }
 
-        let listMangas = []
-        let mangas = document.querySelectorAll("table.ventana_id1 td.cen a");
-        for(let [index, manga] of mangas.entries()){
-            if((index + 1) <= Number(objJSON.numEspanol)){
-                if(!isNaN(Date.parse(manga.innerText))){
-                    let padreTabla = manga.parentElement.childNodes
+        const mangas = document.querySelectorAll("table.ventana_id1 td.cen a");
+        Array.from(mangas).forEach((manga, index) => {
+            const mangaNumber = index + 1;
+            const mangaText = manga.innerText;
+            const childNode = manga.parentElement.childNodes;
+            const dateNode = childNode[childNode.length - 2];
+            const priceNode = childNode[childNode.length - 3];
 
-                    let date = manga.innerText
-                    let precio = padreTabla[padreTabla.length - 3].textContent;
+            if (mangaNumber <= Number(objJSON.numEspanol) && !isNaN(Date.parse(mangaText))) {
+                const date = Number.isInteger(parseInt(dateNode.textContent.trim())) ? dateNode.textContent + mangaText : mangaText;
+                const price = Number.isInteger(parseInt(dateNode.textContent.trim())) ? childNode[childNode.length - 4].textContent : priceNode.textContent;
 
-                    if(Number.isInteger(parseInt(padreTabla[padreTabla.length - 2].textContent.trim()))){
-                        date = padreTabla[padreTabla.length - 2].textContent.concat(date); 
-                        precio = padreTabla[padreTabla.length - 4].textContent;
-                    }
-
-                    listMangas.push({"numTomo": (index + 1), "fecha": date, "precio": precio})
-                }
+                objJSON.listMangas.push({"numTomo": mangaNumber, "fecha": date, "precio": (!price.includes("páginas en") ? price : null), image: childNode[0].src});
             }
-        }
+        });
 
-        objJSON.listMangas = listMangas;
         return objJSON;
     });
 
@@ -115,9 +89,13 @@ async function executeScraping(config) {
 
     const listFullMangas = [];
     const cluster = await Cluster.launch({
-      concurrency: Cluster.CONCURRENCY_CONTEXT,
-      maxConcurrency: config.clusterConcurrency,
-    });
+        concurrency: Cluster.CONCURRENCY_PAGE,
+        maxConcurrency: config.clusterConcurrency,
+        monitor: false,
+        puppeteerOptions: {
+          headless: true, // Abre el navegador en una ventana visible
+        }
+      });
   
     await cluster.task(async ({ page, data: link }) => {
         const mangaData = await scrapeMangaData(page, link);
@@ -138,12 +116,16 @@ async function executeScraping(config) {
     await cluster.idle();
     await cluster.close();
     
-    await jsonService.saveToJson(config.folderJson + 'manga.json', listFullMangas);
+    await jsonService.saveToJson(config.jsonFolder + config.listadoMangaNameFile, listFullMangas);
 }
 
 async function getScraping(config) {
-    await executeScraping(config);
-    return jsonService.readFromJson(config.folderJson + 'manga.json');
+    return jsonService.readFromJson(config.jsonFolder + config.listadoMangaNameFile).then((jsonData) => {
+        return jsonData
+    }).catch((error) => {
+        console.error('Error al leer el archivo JSON:', error.message);
+        return [];
+    });
 }
 
 module.exports = {
