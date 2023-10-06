@@ -1,12 +1,12 @@
 # Draco Reign - Spider Web
-**Draco Reign - Spider Web** es una parte integral de la suite **Draco Reign**, diseñada para llevar a cabo la extracción de datos de la web mediante técnicas de *scraping*. Este proyecto se enfoca en el desarrollo del back-end, implementado en Node.js, y utiliza las potentes bibliotecas de Puppeteer y Express para lograr su funcionalidad.
+**Draco Reign - Spider Web**, que es una parte integral de la suite **Draco Reign**, está diseñada para llevar a cabo la extracción de datos de la web mediante técnicas de *scraping*. Este proyecto se enfoca en el desarrollo del back-end, implementado en Node.js, y utiliza las potentes bibliotecas de Puppeteer y Express para lograr su funcionalidad.
 
 ## Descripción General
 **Draco Reign - Spider Web** es una herramienta que te permite recopilar información valiosa de sitios web de manera automatizada. Ya sea para la obtención de datos para análisis, monitoreo de sitios web, o cualquier otro propósito, esta aplicación está diseñada para brindarte un poderoso conjunto de herramientas para realizar el *scraping* de manera eficiente y efectiva.
 
 ## Webs scaneadas
 El proyecto obtiende los datos de las siguientes webs:
- * [Listado Manga](https://www.listadomanga.es/lista.php) Consulta la [documentación de los Endpoints](documentation/listado-manga.md) para obtener más detalles.
+ * [Listado Manga](https://www.listadomanga.es/lista.php) Consulta la [documentación de los Endpoints](back-end/documentation/listado-manga.md) para obtener más detalles.
 
 ## Dependencias y versiones
 * Node.js >= v18.18.0
