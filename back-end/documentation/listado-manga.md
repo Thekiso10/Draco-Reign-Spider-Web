@@ -23,7 +23,9 @@ Este endpoint devuelve un array de JSON relacionados con la lista de mangas obte
 ```JSON
 [
     {
-        "title": "Title example",
+        "id": "4184",
+        "spanishTitle": "Title example",
+        "originalTitle": "Titulo original en Japones",
         "listMangas": [
             {
                 "numTomo": 1,
@@ -50,8 +52,7 @@ Este endpoint devuelve un array de JSON relacionados con la lista de mangas obte
         "numEspanol": "3",
         "nombreAutor": "Yuko Inari",
         "idAutor": "2836",
-        "coleccion": "Shonen",
-        "id": "4184"
+        "coleccion": "Shonen"
     }
 ]
 
