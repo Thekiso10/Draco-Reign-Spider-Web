@@ -24,12 +24,12 @@ async function scrapeMangaData(page, link) {
     await page.goto(link, { waitUntil: "domcontentloaded" });
 
     const mangaData = await page.evaluate(() => {
-        let index = {indexJapon: -1, indexEspanol: -1, indexAutor: -1, indexColeccion: -1};
-        const tagMappings = {"Números en japonés:": "indexJapon", "Números en español:": "indexEspanol", "Números en castellano:": "indexEspanol", "Guion:": "indexAutor", "Colección:": "indexColeccion"};
+        let index = {indexOriginalTitle: -1, indexJapon: -1, indexEspanol: -1, indexAutor: -1, indexColeccion: -1};
+        const tagMappings = {"Título original:": "indexOriginalTitle", "Números en japonés:": "indexJapon", "Números en español:": "indexEspanol", "Números en castellano:": "indexEspanol", "Guion:": "indexAutor", "Colección:": "indexColeccion"};
 
         //Definir el bloque de los datos generales    
         let element = document.querySelector("table.ventana_id1 td.izq").childNodes;
-        const objJSON = {"title": element[1].innerText, "listMangas": []};
+        const objJSON = {"id": null, "spanishTitle": element[1].innerText, "originalTitle": null, "listMangas": []};
         
         for (const [i, tags] of element.entries()) {
             const tagText = tags.innerText;
@@ -37,26 +37,30 @@ async function scrapeMangaData(page, link) {
                 index[tagMappings[tagText]] = i + ((tagText === "Guion:" || tagText === "Colección:") ? 2 : 1);
             }
         }
-        
+
         //Crear objecto JSON con los dato basico
-        if(index.indexJapon != -1){
+        if (index.indexOriginalTitle !== -1) {
+            objJSON.originalTitle = element[index.indexOriginalTitle].textContent.split('(')[0].trimStart();
+        }
+
+        if(index.indexJapon !== -1){
             objJSON.estadoJapon = element[index.indexJapon].textContent.split('(')[1].slice(0, -1);
             objJSON.numJapon = element[index.indexJapon].textContent.split('(')[0].trim();
         }
         
-        if(index.indexEspanol != -1){
+        if(index.indexEspanol !== -1){
             objJSON.estadoEspanol = element[index.indexEspanol].textContent.split('(')[1].slice(0, -1);
             objJSON.numEspanol = element[index.indexEspanol].textContent.split('(')[0].trim();
         }    
         
-        if(index.indexAutor != -1){
+        if(index.indexAutor !== -1){
             objJSON.nombreAutor = element[index.indexAutor].textContent;
             if(element[index.indexAutor].href != null){
                 objJSON.idAutor = element[index.indexAutor].href.split('id=')[1];
             }
         }
 
-        if(index.indexColeccion != -1){
+        if(index.indexColeccion !== -1){
             objJSON.coleccion = element[index.indexColeccion].textContent;
         }
 
