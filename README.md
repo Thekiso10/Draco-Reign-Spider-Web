@@ -31,4 +31,4 @@ Esto iniciará un servidor Express en el puerto 8000.
 Si encuentras algún problema o tienes alguna sugerencia para mejorar **Draco Reign - Spider Web**, por favor, abre un [issue](https://github.com/Thekiso10/Draco-Reign-Spider-Web/issues) en nuestro repositorio de GitHub. Tu retroalimentación es muy valiosa para nosotros y nos ayuda a hacer de esta herramienta algo aún mejor.
 
 ## Versión
-Versión Actual: **2.0.0**
+Versión Actual: **2.1.0**
