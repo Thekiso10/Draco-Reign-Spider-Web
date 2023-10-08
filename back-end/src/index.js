@@ -10,10 +10,9 @@ const jsonService = require('./service/jsonService');
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Monta las rutas API en /api
+// Monta las rutas API en /apiw
 app.use(config.nameBaseApi, apiRoutes);
 
-// Manejo de errores global
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ message: 'Internal Server Error' });
