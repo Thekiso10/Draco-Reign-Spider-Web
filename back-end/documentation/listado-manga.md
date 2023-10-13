@@ -50,7 +50,8 @@ Este endpoint devuelve un array de JSON relacionados con la lista de mangas obte
         "numJapon": "3",
         "estadoEspanol": "serie completa",
         "numEspanol": "3",
-        "nombreAutor": "Yuko Inari",
+        "nombreAutorGuionista": "Yuko Inari",
+        "nombreAutorDibujante": "Yuko Inari",
         "idAutor": "2836",
         "coleccion": "Shonen"
     }

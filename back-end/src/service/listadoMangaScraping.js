@@ -24,8 +24,8 @@ async function scrapeMangaData(page, link) {
     await page.goto(link, { waitUntil: "domcontentloaded" });
 
     const mangaData = await page.evaluate(() => {
-        let index = {indexOriginalTitle: -1, indexJapon: -1, indexEspanol: -1, indexAutor: -1, indexColeccion: -1};
-        const tagMappings = {"Título original:": "indexOriginalTitle", "Números en japonés:": "indexJapon", "Números en español:": "indexEspanol", "Números en castellano:": "indexEspanol", "Guion:": "indexAutor", "Colección:": "indexColeccion"};
+        let index = {indexOriginalTitle: -1, indexJapon: -1, indexEspanol: -1, indexGuion: -1, indexDibujo: -1, indexColeccion: -1};
+        const tagMappings = {"Título original:": "indexOriginalTitle", "Números en japonés:": "indexJapon", "Números en español:": "indexEspanol", "Números en castellano:": "indexEspanol", "Guion:": "indexGuion", "Dibujo:": "indexDibujo", "Colección:": "indexColeccion"};
 
         //Definir el bloque de los datos generales    
         let element = document.querySelector("table.ventana_id1 td.izq").childNodes;
@@ -34,7 +34,7 @@ async function scrapeMangaData(page, link) {
         for (const [i, tags] of element.entries()) {
             const tagText = tags.innerText;
             if (tagMappings.hasOwnProperty(tagText)) {
-                index[tagMappings[tagText]] = i + ((tagText === "Guion:" || tagText === "Colección:") ? 2 : 1);
+                index[tagMappings[tagText]] = i + ((tagText === "Guion:" || tagText === "Dibujo:" || tagText === "Colección:") ? 2 : 1);
             }
         }
 
@@ -43,20 +43,27 @@ async function scrapeMangaData(page, link) {
             objJSON.originalTitle = element[index.indexOriginalTitle].textContent.split('(')[0].trimStart();
         }
 
-        if(index.indexJapon !== -1){
+        if (index.indexJapon !== -1) {
             objJSON.estadoJapon = element[index.indexJapon].textContent.split('(')[1].slice(0, -1);
             objJSON.numJapon = element[index.indexJapon].textContent.split('(')[0].trim();
         }
         
-        if(index.indexEspanol !== -1){
+        if (index.indexEspanol !== -1) {
             objJSON.estadoEspanol = element[index.indexEspanol].textContent.split('(')[1].slice(0, -1);
             objJSON.numEspanol = element[index.indexEspanol].textContent.split('(')[0].trim();
         }    
         
-        if(index.indexAutor !== -1){
-            objJSON.nombreAutor = element[index.indexAutor].textContent;
-            if(element[index.indexAutor].href != null){
-                objJSON.idAutor = element[index.indexAutor].href.split('id=')[1];
+        if (index.indexGuion !== -1) {
+            objJSON.nombreAutorGuionista = element[index.indexGuion].textContent;
+            if(element[index.indexGuion].href != null){
+                objJSON.idAutor = element[index.indexGuion].href.split('id=')[1];
+            }
+        }
+
+        if (index.indexDibujo !== -1) {
+            objJSON.nombreAutorDibujante = element[index.indexDibujo].textContent;
+            if(element[index.indexDibujo].href != null && objJSON.idAutor != null){
+                objJSON.idAutor = element[index.indexDibujo].href.split('id=')[1];
             }
         }
 
