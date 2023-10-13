@@ -1,6 +1,6 @@
 {
-    "name": "draco-reign-spieder-web",
-    "version": "2.1.0",
+    "name": "draco-reign-spider-web",
+    "version": "2.2.0",
     "description": "Obtención de los datos de los mangas de la pagina: https://www.listadomanga.es",
     "main": "src/index.js",
     "dependencies": {
